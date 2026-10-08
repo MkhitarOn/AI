@@ -37,7 +37,7 @@ jobs:
           service = build('drive', 'v3', credentials=creds)
 
           folder_id = os.environ['FOLDER_ID']
-          file_name = 'shared_file.md'
+          file_name = 'Առմռոբոտիքս.md'
 
           # Գտնում ենք ֆայլը թղթապանակի մեջ
           query = f\"'{folder_id}' in parents and name = '{file_name}' and trashed = false\"
@@ -61,5 +61,5 @@ jobs:
         run: |
           git config --global user.name 'Drive Sync Bot'
           git config --global user.email 'bot@github.com'
-          git add shared_file.md
+          git add Առմռոբոտիքս.md
           git diff-index --quiet HEAD || (git commit -m "Auto-sync from Google Drive [Gemini]" && git push)
