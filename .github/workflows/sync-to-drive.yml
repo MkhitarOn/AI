@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'Արմռոբոտիքս.md'
+      - 'Առմռոբոտիքս.md'
   workflow_dispatch:
 
 jobs:
@@ -40,7 +40,7 @@ jobs:
           service = build('drive', 'v3', credentials=creds)
 
           folder_id = os.environ['FOLDER_ID']
-          file_name = 'Արմռոբոտիքս.md'
+          file_name = 'Առմռոբոտիքս.md'
 
           query = f\"'{folder_id}' in parents and name = '{file_name}' and trashed = false\"
           results = service.files().list(q=query, fields='files(id)').execute()
