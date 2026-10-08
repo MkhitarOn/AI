@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'shared_file.md' # Քո ֆայլի անունը GitHub-ում
+      - 'Առմռոբոտիքս.md' # Քո ֆայլի անունը GitHub-ում
 
 jobs:
   sync:
