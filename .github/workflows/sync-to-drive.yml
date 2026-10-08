@@ -1,0 +1,61 @@
+name: Sync GitHub to Google Drive
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'shared_file.md' # Քո ֆայլի անունը GitHub-ում
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install google-api-python-client google-auth
+
+      - name: Upload to Google Drive Folder
+        env:
+          GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS_DATA }}
+          FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: |
+          python -c "
+          import os, json
+          from google.oauth2.service_account import Credentials
+          from googleapiclient.discovery import build
+          from googleapiclient.http import MediaFileUpload
+
+          creds_data = json.loads(os.environ['GDRIVE_CREDENTIALS'])
+          creds = Credentials.from_service_account_info(creds_data)
+          service = build('drive', 'v3', credentials=creds)
+
+          folder_id = os.environ['FOLDER_ID']
+          file_name = 'shared_file.md'
+
+          # Ստուգում ենք՝ արդյոք ֆայլն արդեն կա թղթապանակում
+          query = f\"'{folder_id}' in parents and name = '{file_name}' and trashed = false\"
+          results = service.files().list(q=query, fields='files(id)').execute()
+          files = results.get('files', [])
+
+          media = MediaFileUpload(file_name, mimetype='text/plain')
+
+          if files:
+              # Եթե կա, թարմացնում ենք
+              file_id = files[0]['id']
+              service.files().update(fileId=file_id, media_body=media).execute()
+              print('Updated existing file in Google Drive Folder!')
+          else:
+              # Եթե չկա, ստեղծում ենք նորը թղթապանակի մեջ
+              file_metadata = {'name': file_name, 'parents': [folder_id]}
+              service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+              print('Created new file in Google Drive Folder!')
+          "
