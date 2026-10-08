@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'Առմռոբոտիքս.md' # Քո ֆայլի անունը GitHub-ում
-      workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   sync:
