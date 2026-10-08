@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'Առմռոբոտիքս.md' # Քո ֆայլի անունը GitHub-ում
+      - 'Արմռոբոտիքս.md'
   workflow_dispatch:
 
 jobs:
@@ -40,9 +40,8 @@ jobs:
           service = build('drive', 'v3', credentials=creds)
 
           folder_id = os.environ['FOLDER_ID']
-          file_name = 'shared_file.md'
+          file_name = 'Արմռոբոտիքս.md'
 
-          # Ստուգում ենք՝ արդյոք ֆայլն արդեն կա թղթապանակում
           query = f\"'{folder_id}' in parents and name = '{file_name}' and trashed = false\"
           results = service.files().list(q=query, fields='files(id)').execute()
           files = results.get('files', [])
@@ -50,12 +49,10 @@ jobs:
           media = MediaFileUpload(file_name, mimetype='text/plain')
 
           if files:
-              # Եթե կա, թարմացնում ենք
               file_id = files[0]['id']
               service.files().update(fileId=file_id, media_body=media).execute()
               print('Updated existing file in Google Drive Folder!')
           else:
-              # Եթե չկա, ստեղծում ենք նորը թղթապանակի մեջ
               file_metadata = {'name': file_name, 'parents': [folder_id]}
               service.files().create(body=file_metadata, media_body=media, fields='id').execute()
               print('Created new file in Google Drive Folder!')
