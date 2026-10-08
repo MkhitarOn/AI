@@ -1,0 +1,65 @@
+name: Sync Google Drive to GitHub
+
+on:
+  schedule:
+    - cron: '*/5 * * * *' # Աշխատում է ամեն 5 րոպեն մեկ
+  workflow_dispatch: # Թույլ է տալիս նաև ձեռքով աշխատացնել GitHub-ի Actions բաժնից
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install google-api-python-client google-auth
+
+      - name: Download from Google Drive Folder
+        env:
+          GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS_DATA }}
+          FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: |
+          python -c "
+          import os, json
+          from google.oauth2.service_account import Credentials
+          from googleapiclient.discovery import build
+          from googleapiclient.http import MediaIoBaseDownload
+
+          creds_data = json.loads(os.environ['GDRIVE_CREDENTIALS'])
+          creds = Credentials.from_service_account_info(creds_data)
+          service = build('drive', 'v3', credentials=creds)
+
+          folder_id = os.environ['FOLDER_ID']
+          file_name = 'shared_file.md'
+
+          # Գտնում ենք ֆայլը թղթապանակի մեջ
+          query = f\"'{folder_id}' in parents and name = '{file_name}' and trashed = false\"
+          results = service.files().list(q=query, fields='files(id)').execute()
+          files = results.get('files', [])
+
+          if files:
+              file_id = files[0]['id']
+              request = service.files().get_media(fileId=file_id)
+              with open(file_name, 'wb') as f:
+                  downloader = MediaIoBaseDownload(f, request)
+                  done = False
+                  while not done:
+                      status, done = downloader.next_chunk()
+              print('Downloaded updated file from Google Drive!')
+          else:
+              print('File not found in Google Drive folder yet.')
+          "
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'Drive Sync Bot'
+          git config --global user.email 'bot@github.com'
+          git add shared_file.md
+          git diff-index --quiet HEAD || (git commit -m "Auto-sync from Google Drive [Gemini]" && git push)
